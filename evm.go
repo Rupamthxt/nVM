@@ -76,6 +76,36 @@ func (vm *EVM) Run() {
 			val := new(big.Int).SetBytes(valBytes)
 			vm.stack.Push(val)
 			fmt.Printf("MLOAD: Read %v from address %d\n", val, offset)
+
+		case LT:
+			a := vm.stack.Pop()
+			b := vm.stack.Pop()
+			// If a < b, push 1 (true), else push 0 (false)
+			if a.Cmp(b) < 0 {
+				vm.stack.Push(big.NewInt(1)) // true
+			} else {
+				vm.stack.Push(big.NewInt(0)) // false
+			}
+
+		case JUMPI:
+			dest := vm.stack.Pop().Uint64()
+			condition := vm.stack.Pop() // 0 = False, Anything else = True
+
+			if condition.Sign() != 0 {
+				// Condition true, perform jump
+				if dest >= uint64(len(vm.code)) || vm.code[dest] != byte(JUMPDEST) {
+					panic(fmt.Sprintf("invalid jump destination at %d", dest))
+				}
+				vm.pc = int(dest)
+				fmt.Printf("JUMPI: Jumping to %d\n", dest)
+			} else {
+				vm.pc++ // Condition false, just keep waiting
+				fmt.Printf("JUMPI: No Jump (Condition false)\n")
+			}
+
+		case JUMPDEST:
+			// Just a marker for valid jump destinations, no action needed
+			fmt.Printf("JUMPDEST: Valid jump destination at %d\n", vm.pc-1)
 		default:
 			panic(fmt.Sprintf("Unknown opcode: 0x%x", op))
 		}
