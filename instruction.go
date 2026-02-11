@@ -30,10 +30,29 @@ func NewJumpTable() *JumpTable {
 	table[0x51] = opMload
 	table[0x52] = opMstore
 	table[0x10] = opLt
+	table[0x56] = opJump
 	table[0x57] = opJumpI
 	table[0x5B] = opJumpDest
 
 	return table
+}
+
+var GasTable [256]uint64
+
+func init() {
+	for i := range 256 {
+		GasTable[i] = 1
+	}
+
+	GasTable[ADD] = GasQuickStep
+	GasTable[SUB] = GasQuickStep
+	GasTable[PUSH1] = GasQuickStep
+	GasTable[MUL] = GasSlowStep
+	GasTable[MSTORE] = GasMemoryStep
+	GasTable[MLOAD] = GasMemoryStep
+	GasTable[JUMP] = GasQuickStep
+	GasTable[SSTORE] = GasStorageStep
+	GasTable[STOP] = 0 // Free to stop
 }
 
 func opStop(vm *EVM) {}
@@ -105,6 +124,16 @@ func opJumpI(vm *EVM) {
 	} else {
 		vm.pc++ // Condition false, just keep waiting
 	}
+}
+
+func opJump(vm *EVM) {
+	dest := vm.stack.Pop().Uint64()
+
+	if dest >= uint64(len(vm.code)) || vm.code[dest] != byte(JUMPDEST) {
+		panic(fmt.Sprintf("Invalid jump destination at %d", dest))
+	}
+
+	vm.pc = int(dest)
 }
 func opJumpDest(vm *EVM) {
 	// Just a marker for valid jump destinations, no action needed

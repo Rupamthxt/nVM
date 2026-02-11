@@ -26,4 +26,14 @@ const (
 	JUMPDEST OpCode = 0x5B // Mark a valid jump target
 	JUMP     OpCode = 0x56 // Jump to address
 	JUMPI    OpCode = 0x57 // Conditional jump
+
+	SSTORE OpCode = 0x55 // Save to Storage
+	SLOAD  OpCode = 0x54 // Load from Storage
+)
+
+const (
+	GasQuickStep   uint64 = 2   // ADD, SUB, PUSH
+	GasSlowStep    uint64 = 10  // MUL, DIV
+	GasMemoryStep  uint64 = 20  // MLOAD, MSTORE
+	GasStorageStep uint64 = 100 // SSTORE
 )
